@@ -1,0 +1,28 @@
+# cf.
+# Embassy:
+#   - https://github.com/embassy-rs/embassy/blob/main/examples/rp235x/.cargo/config.toml
+#   - https://github.com/embassy-rs/embassy/blob/main/examples/rp235x/build.rs
+#
+# rp-hal:
+#   - https://github.com/rp-rs/rp-hal/blob/main/rp235x-hal-examples/.cargo/config.toml
+
+[build]
+target = "thumbv8m.main-none-eabihf"
+
+[target.thumbv8m.main-none-eabihf]
+
+rustflags = [
+    # Turns off page alignment of sections (which saves flash space)
+    "-C", "link-arg=--nmagic",
+
+    # Tells the linker to use link.x as a linker script.
+    "-C", "link-arg=-Tlink.x",
+
+    # TODO: is this necessary?
+    # "-C", "target-cpu=cortex-m33",
+]
+
+runner = "elf2uf2-rs -d -s -f 0xe48bff59"
+
+[env]
+DEFMT_LOG = "debug"

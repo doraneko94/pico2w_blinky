@@ -1,0 +1,50 @@
+[package]
+name = "pico2w_blinky"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cortex-m-rt = "0.7.5"
+cyw43 = { version = "0.5.0", features = ["firmware-logs", "bluetooth"] }
+cyw43-pio = "0.8.0"
+embassy-executor = { version = "0.9.1", features = [
+    "arch-cortex-m",
+    "executor-thread",
+    "executor-interrupt",
+] }
+embassy-futures = "0.1.2"
+embassy-rp = { version = "0.8.0", features = [
+    "unstable-pac", 
+    "time-driver", 
+    "critical-section-impl",
+    "rp235xa",
+    "binary-info",
+] }
+embassy-sync = "0.7.2"
+embassy-time = "0.5.0"
+embassy-usb = "0.5.1"
+embedded-io-async = "0.6.1"
+heapless = "0.9.1"
+panic-halt = "1.0.0"
+static_cell = "2.1.1"
+trouble-host = { git = "https://github.com/embassy-rs/trouble.git", rev = "c1b8d7a0914a4f8c83f579fc45fbee1ced0bf2d8" }
+
+[[bin]]
+name = "blinky"
+path = "src/blinky.rs"
+
+[[bin]]
+name = "blinky_usb"
+path = "src/blinky_usb.rs"
+
+[[bin]]
+name = "blinky_input"
+path = "src/blinky_input.rs"
+
+[[bin]]
+name = "blinky_gui"
+path = "src/blinky_gui.rs"
+
+[[bin]]
+name = "blinky_ble"
+path = "src/blinky_ble.rs"

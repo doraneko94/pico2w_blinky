@@ -1,0 +1,5 @@
+{
+    // no_std cannot be built for testing, so let rust-analyzer know it.
+    // Otherwise, we'll see an error "Can't find crate for 'test'"
+    "rust-analyzer.cargo.allTargets": false
+}
