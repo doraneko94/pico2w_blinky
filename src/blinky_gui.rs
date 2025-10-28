@@ -1,11 +1,6 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write;
-use core::sync::atomic::{AtomicU32, Ordering};
-
-use embassy_sync::blocking_mutex::raw::NoopRawMutex;
-use embassy_sync::pipe::Pipe;
 use panic_halt as _;
 
 use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
@@ -17,11 +12,15 @@ use embassy_rp::gpio::{Level, Output};
 use embassy_rp::peripherals::{DMA_CH0, PIO0, USB};
 use embassy_rp::pio::{InterruptHandler as PioInterruptHandler, Pio};
 use embassy_rp::usb as rp_usb;
+use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+use embassy_sync::pipe::Pipe;
 use embassy_time::{Duration, Timer};
 
 use embassy_usb::Builder;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State as CdcState};
 
+use core::fmt::Write;
+use core::sync::atomic::{AtomicU32, Ordering};
 use embedded_io_async::Write as _;
 use heapless::String;
 use static_cell::StaticCell;
@@ -63,12 +62,12 @@ async fn usb_console_task(
     tx.wait_connection().await;
     let _ = tx.write_all(b"Enter delay in ms. Example: 500<Enter>\r\n").await;
 
-    let mut one = [0u8; 1];
+    let mut buf = [0u8; 1];
     let mut line: String<16> = String::new();
 
     loop {
         let tick = Timer::after(Duration::from_secs(1));
-        let read_fut = async { pipe.read(&mut one).await };
+        let read_fut = async { pipe.read(&mut buf).await };
 
         match select(tick, read_fut).await {
             Either::First(()) => {
@@ -78,13 +77,13 @@ async fn usb_console_task(
                 let _ = tx.write_all(s.as_bytes()).await;
             }
             Either::Second(n) if n > 0 => {
-                let ch = one[0];
+                let ch = buf[0];
                 match ch {
                     b'0'..=b'9' => { let _ = line.push(ch as char); }
                     b'\r' | b'\n' => {
                         if !line.is_empty() {
                             if let Ok(v) = parse_u32_ascii(&line) {
-                                DELAY_MS.store(v.clamp(1, 10_000), Ordering::Relaxed);
+                                DELAY_MS.store(v.clamp(10, 10_000), Ordering::Relaxed);
                             }
                             line.clear();
                         }

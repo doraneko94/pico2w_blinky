@@ -1,9 +1,6 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write;
-use core::sync::atomic::{AtomicU32, Ordering};
-
 use panic_halt as _;
 
 use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
@@ -20,6 +17,8 @@ use embassy_time::{Duration, Timer};
 use embassy_usb::Builder;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State as CdcState};
 
+use core::fmt::Write;
+use core::sync::atomic::{AtomicU32, Ordering};
 use embedded_io_async::Write as _;
 use heapless::String;
 use static_cell::StaticCell;
@@ -63,12 +62,12 @@ async fn usb_console_task(
     let _ = tx.write_all(b"Enter delay in ms (positive integer). Example: 500<Enter>\r\n").await;
     let _ = tx.write_all(b"> ").await;
 
-    let mut buf = [0u8; 64];
-    let mut line: String<64> = String::new();
+    let mut buf = [0u8; 1];
+    let mut line: String<16> = String::new();
 
     loop {
         let tick = Timer::after(Duration::from_secs(1));
-        let read_fut = async { rx.read_packet(&mut buf[..1]).await };
+        let read_fut = async { rx.read_packet(&mut buf[..]).await };
 
         match select(tick, read_fut).await {
             Either::First(()) => {
@@ -76,7 +75,7 @@ async fn usb_console_task(
 
                 let _ = tx.write_all(CLRLINE).await;
 
-                let mut s: String<64> = String::new();
+                let mut s: String<32> = String::new();
                 let _ = core::write!(&mut s, "delay={} ms\r\n", d);
                 let _ = tx.write_all(s.as_bytes()).await;
 
@@ -95,15 +94,11 @@ async fn usb_console_task(
 
                         if !line.is_empty() {
                             if let Ok(v) = parse_u32_ascii(&line) {
-                                if v == 0 {
-                                    let _ = tx.write_all(b"ERROR: must be positive integer.\r\n").await;
-                                } else {
-                                    let v = v.min(10_000);
-                                    DELAY_MS.store(v, Ordering::Relaxed);
-                                    let mut s: String<64> = String::new();
-                                    let _ = core::write!(&mut s, "OK: delay set to {} ms\r\n", v);
-                                    let _ = tx.write_all(s.as_bytes()).await;
-                                }
+                                let v = v.clamp(10, 10_000);
+                                DELAY_MS.store(v, Ordering::Relaxed);
+                                let mut s: String<32> = String::new();
+                                let _ = core::write!(&mut s, "OK: delay set to {} ms\r\n", v);
+                                let _ = tx.write_all(s.as_bytes()).await;
                             } else {
                                 let _ = tx.write_all(b"ERROR: invalid number.\r\n").await;
                             }

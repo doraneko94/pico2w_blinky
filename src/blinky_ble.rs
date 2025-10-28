@@ -222,7 +222,7 @@ async fn gatt_events_task<P: PacketPool>(
                             let data = ev.data();
                             if data.len() == 4 {
                                 let v = u32::from_le_bytes([data[0], data[1], data[2], data[3]])
-                                    .clamp(1, 10_000);
+                                    .clamp(10, 10_000);
                                 let _ = server.set(&delay, &v);
                                 DELAY_MS.store(v, Ordering::Relaxed);
                             }

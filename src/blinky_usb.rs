@@ -16,7 +16,9 @@ use embassy_time::{Duration, Timer};
 use embassy_usb::Builder;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State as CdcState};
 
+use core::fmt::Write;
 use embedded_io_async::Write as _;
+use heapless::String;
 use static_cell::StaticCell;
 
 #[unsafe(link_section = ".bi_entries")]
@@ -52,11 +54,8 @@ async fn usb_print_task(
 ) -> ! {
     tx.wait_connection().await;
 
-    use core::fmt::Write as FmtWrite;
-    use heapless::String;
-
     loop {
-        let mut s: String<64> = String::new();
+        let mut s: String<32> = String::new();
         let _ = core::write!(&mut s, "delay={} ms\r\n", delay_ms);
         let _ = tx.write_all(s.as_bytes()).await;
         Timer::after(Duration::from_secs(1)).await;

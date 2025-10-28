@@ -17,12 +17,6 @@ rustflags = [
 
     # Tells the linker to use link.x as a linker script.
     "-C", "link-arg=-Tlink.x",
-
-    # TODO: is this necessary?
-    # "-C", "target-cpu=cortex-m33",
 ]
 
 runner = "elf2uf2-rs -d -s -f 0xe48bff59"
-
-[env]
-DEFMT_LOG = "debug"

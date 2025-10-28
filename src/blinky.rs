@@ -75,7 +75,8 @@ async fn main(spawner: Spawner) {
         .set_power_management(cyw43::PowerManagementMode::PowerSave)
         .await;
 
-    let delay = Duration::from_millis(50);
+    let delay_ms: u32 = 250;
+    let delay = Duration::from_millis(delay_ms as u64);
     loop {
         control.gpio_set(0, true).await;
         Timer::after(delay).await;
